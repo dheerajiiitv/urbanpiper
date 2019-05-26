@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {% block title %}
+    {% endblock %}
+    {% include 'material/includes/material_css.html' %}
+    {% include 'material/includes/material_js.html' %}
+
+    {% load static %}
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark">
+    <a class="navbar-brand" href="{% url 'delivery_system:home' %}">
+        <img src="{% static 'image/logo.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
+    </a>
+
+{% if user.is_authenticated %}
+    {% if user.staff_list.is_store_manager  %}
+        <p class="nav-item">
+            <a class="" href="{% url 'delivery_system:create_task' %}">Create Task</a>
+        </p>
+        <p class="nav-item">
+            <a class="" href="{% url 'delivery_system:tasks_list' %}">Tasks</a>
+        </p>
+
+    {% endif %}
+    {% if user.staff_list.is_delivery_boy  %}
+         <p class="nav-item">
+            <a class="" href="{% url 'delivery_system:accepted_tasks' %}">Accepted Tasks</a>
+        </p>
+
+        {% endif %}
+
+<p class="nav-item">
+            <a class="" href="{% url 'logout' %}">Logout</a>
+        </p>
+{% endif %}
+    <p class="lead " style="float: right">Urban Piper</p>
+</nav>
+
+
+{% block content %}
+{% endblock %}
+
+
+</body>
+</html>

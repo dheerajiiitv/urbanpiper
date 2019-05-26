@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load material_form %}
+{% load custom_tags %}
+{% block title %}
+    <script
+            src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"></script>
+    <title>
+        Tasks
+    </title>
+{% endblock %}
+{% block content %}
+
+    <div class="container">
+    <h1 style="margin-top: 7%;" class="jumbotron">Task List</h1>
+        <div class="row" style="min-height: 400px; max-height: 400px;">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Task Name</th>
+                    <th scope="col">Priority</th>
+                    <th scope="col">Current State</th>
+                    <th scope="col">View Transitions states</th>
+                    <th scope="col">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for task in tasks_list %}
+
+                    <tr>
+                        <th scope="row">{{ forloop.counter0 | add:page_obj.start_index }}</th>
+                        <td>{{ task.title_name }}</td>
+                        <td>{{ task.priority  | get_priority  }}</td>
+                        <td>{{ task.current_state | get_state }}</td>
+                        <td><a class="btn btn-primary" href="{% url 'delivery_system:task_details' task.id %}">View</a> </td>
+                        {% if task.current_state == 0 %}
+                    <td><a class="btn btn-danger" href="{% url 'delivery_system:cancel_task' page_number=page_obj.number id=task.id %}">Cancel</a></td>
+                    {% endif %}
+                     {% if task.current_state == 4 %}
+                    <td><a class="btn btn-danger" href="{% url 'delivery_system:task_details' task.id %}">New</a></td>
+                    {% endif %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="row">
+            <div class="pagination">
+    <span class="step-links">
+
+
+        <span class="current lead">
+             Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_previous %}
+            <a class="btn lead" href="?page=1">&laquo; first</a>
+            <a class="btn lead" href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+            <a class="btn lead" href="?page={{ page_obj.next_page_number }}">next</a>
+            <a class="btn lead" href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
