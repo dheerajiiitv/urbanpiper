@@ -38,8 +38,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'delivery_system.apps.DeliverySystemConfig',
+    'celery',
     'material',
-    'material.frontend'
+    'material.frontend',
+    'asgi_redis',
+    'channels'
 ]
 
 MIDDLEWARE = [
@@ -103,6 +106,16 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+CHANNEL_LAYERS = {
+    'default':{
+        'BACKEND':'asgi_redis.RedisChannelLayer',
+        'CONFIG':{
+            'hosts':[os.environ.get('REDDIS_URL', 'redis://localhost:6379')],
+            'capacity':100,
+        },
+        'ROUTING':'urbanPiper.routing.channel_routing'
+    }
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
@@ -128,4 +141,4 @@ STATICFILES_DIRS = [
 LOGIN_URL = '/login'
 LOGOUT_REDIRECT_URL = '/login'
 LOGIN_REDIRECT_URL = '/delivery/home'
-CELERY_BROKER_URL = 'amqp://localhost'
+# CELERY_IMPORTS = ('delivery_system.tasks',)

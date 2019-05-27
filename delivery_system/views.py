@@ -1,14 +1,19 @@
+import json
+
+from channels import Group
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
+from django.core import serializers
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse_lazy, reverse
 from django.views.generic import CreateView, UpdateView, ListView, DetailView, TemplateView
 
+from delivery_system import asysn_tasks
 from delivery_system.models import Staff, DeliveryTask, StateDeliveryTask
 from .forms import LoginForm, AddDeliveryTaskForm
 from material.frontend.views import ListModelView
-
+from .asysn_tasks import get_new_tasks
 
 # Create your views here.
 
@@ -54,6 +59,14 @@ class AddDeliveryTaskView(LoginRequiredMixin, CheckAuthenticationUserMixin, Crea
         self.object.save()
         StateDeliveryTask.objects.create(state=StateDeliveryTask.NEW, delivery_tak=self.object,
                                          state_change_by=self.request.user).save()
+
+        # Connect.
+        ordered = get_new_tasks()
+        if ordered:
+            Group('new-tasks').send({"text": json.dumps({'data':serializers.serialize("json", [ordered]),"type": 'TYPE_TASKS'})})
+        else:
+            Group('new-tasks').send({"text": json.dumps({'data':serializers.serialize("json", []),"type": 'TYPE_TASKS'})})
+
         return HttpResponseRedirect(reverse('delivery_system:home'))
 
     def get_current_user(self):
@@ -99,15 +112,19 @@ def cancel_task(request, page_number, id):
                     task_state = StateDeliveryTask.objects.create(delivery_tak=task, state=StateDeliveryTask.CANCELLED,
                                                                   state_change_by=request.user)
                     task_state.save()
-                    # TODO: Update Queue
-                    # TODO: Real Time update user interface.
+                    ordered = get_new_tasks()
+                    if ordered:
+                        Group('new-tasks').send({"text": json.dumps({'data':serializers.serialize("json", [ordered]),"type": 'TYPE_TASKS'})})
+                    else:
+                        Group('new-tasks').send({"text": json.dumps({'data':serializers.serialize("json", []),"type": 'TYPE_TASKS'})})
+
                     return HttpResponseRedirect(reverse('delivery_system:tasks_list') + '?page=%s' % page_number)
                 else:
                     raise ValueError("You can't cancel this task")
 
             else:
                 raise ValueError("Task Can't be cancelled Reason 1. You do not created this task 2. Task with this ID is not "
-                      "available.")
+                                 "available.")
         except Exception as e:
             raise ValueError("Transaction updating on the selected database row by some other user. Please try after sometime", e)
     else:
@@ -130,9 +147,16 @@ def decline_task(request, page_number, id):
                     new_state = StateDeliveryTask.objects.create(delivery_tak=task, state=StateDeliveryTask.DECLINED,
                                                                  state_change_by=request.user)
                     new_state.save()
-                # TODO: Update Queue: Add task to queue
-                # TODO: Real Time update user interface.
-                # TODO: Alert Store Manager who created it.
+                    # Update Queue: Add task to queue
+                    #  Real Time update user interface.
+                    # ordered = get_new_tasks()
+                    # if ordered:
+                    #     Group('new-tasks').send({"text": json.dumps({'data':serializers.serialize("json", [ordered]),"type": 'TYPE_TASKS'})})
+                    # else:
+                    #     Group('new-tasks').send({"text": json.dumps({'data':serializers.serialize("json", []),"type": 'TYPE_TASKS'})})
+
+                    # Alert Store Manager who created it.
+                    Group('notification').send({"text": json.dumps({'data': str("Delivery boy - "+request.user.username+" declined your task "+task.title_name), "type": 'NOTIFY'})})
                     return HttpResponseRedirect(reverse('delivery_system:accepted_tasks') + '?page=%s' % page_number)
                 else:
                     raise ValueError("Task does not specify condition 1. You are the not the deliver boy who Accepted this task")
@@ -159,7 +183,7 @@ def complete_task(request, page_number, id):
                     new_state = StateDeliveryTask.objects.create(delivery_tak=task, state=StateDeliveryTask.COMPLETED,
                                                                  state_change_by=request.user)
                     new_state.save()
-                # TODO: Real Time update user interface.
+                    # TODO: Real Time update user interface.
                     return HttpResponseRedirect(reverse('delivery_system:accepted_tasks')+ '?page=%s' % page_number)
                 else:
                     raise ValueError("Task does not specify condition 1. You are the not the deliver boy who Accepted this task")
@@ -172,13 +196,17 @@ def complete_task(request, page_number, id):
         return HttpResponseRedirect(reverse('login'))
 
 
-def accept_task(request, page_number, id):
+def accept_task(request, id):
     if request.user.is_authenticated:
+        # Check for more than 3 pending tasks
+        query_set =StateDeliveryTask.objects.filter(state_change_by=request.user).filter(
+            delivery_tak__current_state=StateDeliveryTask.ACCEPTED).all()
+        if len(query_set) == 3:
+            raise ValueError("You can't accept this task. Please complete your previous tasks!!")
         try:
             task = DeliveryTask.objects.select_for_update().filter(id=id).first()
             if task:
-                task_state = StateDeliveryTask.objects.get(delivery_tak=task, state=StateDeliveryTask.NEW,
-                                                           state_change_by=request.user)
+                task_state = StateDeliveryTask.objects.get(delivery_tak=task, state=StateDeliveryTask.NEW)
                 if task_state:
                     task.current_state = StateDeliveryTask.ACCEPTED
                     task.save()
@@ -186,10 +214,8 @@ def accept_task(request, page_number, id):
                     new_state = StateDeliveryTask.objects.create(delivery_tak=task, state=StateDeliveryTask.ACCEPTED,
                                                                  state_change_by=request.user)
                     new_state.save()
-                # TODO: Update Queue
-                # TODO update UI of delivery boy should not shown this task
-                # TODO: Real Time update user interface.
-                    return HttpResponseRedirect(reverse('delivery_system:accepted_tasks')+ '?page=%s' % page_number)
+                    # TODO: Not more than 3 tasks should be accepted.
+                    return HttpResponseRedirect(reverse('delivery_system:accepted_tasks'))
                 else:
                     raise ValueError("Task does not specify condition 1. State task is already picked or cancelled by manager.")
 
@@ -199,3 +225,7 @@ def accept_task(request, page_number, id):
             raise ValueError("Transaction updating on the selected database row by some other user.", e)
     else:
         return HttpResponseRedirect(reverse('login'))
+
+class AcceptATask(TemplateView):
+
+    template_name = 'Tasks/accept_task.html'

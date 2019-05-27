@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load material_form %}
+{% load custom_tags %}
+{% block title %}
+    <title>
+        Tasks
+    </title>
+{% endblock %}
+{% block content %}
+
+    <div class="container" style="margin-top: 50px;">
+        <div id="no-task">
+            <h2  id="no_task">No task available</h2>
+        </div>
+        <div id="task">
+            <div class="card">
+                <div class="card-header">
+                    <h2><span id="task_name"></span></h2>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">
+                        Priority -
+                        <span id="task_priority"></span>
+                    </h5>
+                    <p class="card-text"><b>Created on </b><span id="task_created_on"></span></p>
+                    <div class="row">
+                        <a  id='accept_task' class="btn btn-primary">Accept</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script>
+        var wsaddr = window.location.host;
+        var ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        var path = window.location.pathname.replace(/\/$/, "");
+        var wsUri = ws_scheme + "://" + wsaddr + path + "/ws/";
+        var websocket;
+        function setupWebSocket() {
+            websocket = new WebSocket(wsUri);
+            websocket.onopen = function(evt) { onOpen(evt) };
+            websocket.onmessage = function(evt) { onMessage(evt) };
+
+        }
+
+        function onOpen (evt) {
+            console.log("Connected to websocket!");
+            websocket.send(JSON.stringify({
+                'evt': 'new_tasks'
+            }));
+        }
+
+        function onMessage (evt) {
+            a = evt;
+            received_data = evt.data;
+            received_data = JSON.parse(received_data);
+
+            function change_to_text(priority) {
+                if (priority === 0)
+                    return 'HIGH';
+                else if(priority === 1)
+                    return 'MEDIUM';
+                else
+                    return'LOW';
+            }
+        if (received_data.type === 'TYPE_TASKS'){
+            tasks = JSON.parse(received_data.data);
+            if (tasks.length > 0){
+                tasks = tasks[0];
+                $('#no-task').hide();
+                $('#task').show();
+                $('#task_name').text(tasks.fields.title_name);
+                $('#task_priority').text(change_to_text(tasks.fields.priority));
+                $('#task_created_on').text(new Date(Date.parse(tasks.fields.creation_date)));
+                var url = "{% url 'delivery_system:accept_task' id=4%} ";
+                url = url.replace(4, tasks.pk);
+                console.log(url);
+                $('#accept_task').attr('href',url)
+            }
+            else{
+
+                $('#task').hide();
+                $('#no-task').show();
+
+
+            }
+        }
+
+
+        }
+
+        setupWebSocket();
+
+    </script>
+{% endblock %}

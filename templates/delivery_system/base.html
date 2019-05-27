@@ -19,27 +19,29 @@
         <img src="{% static 'image/logo.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
     </a>
 
-{% if user.is_authenticated %}
-    {% if user.staff_list.is_store_manager  %}
-        <p class="nav-item">
-            <a class="" href="{% url 'delivery_system:create_task' %}">Create Task</a>
-        </p>
-        <p class="nav-item">
-            <a class="" href="{% url 'delivery_system:tasks_list' %}">Tasks</a>
-        </p>
-
-    {% endif %}
-    {% if user.staff_list.is_delivery_boy  %}
-         <p class="nav-item">
-            <a class="" href="{% url 'delivery_system:accepted_tasks' %}">Accepted Tasks</a>
-        </p>
+    {% if user.is_authenticated %}
+        {% if user.staff_list.is_store_manager  %}
+            <p class="nav-item">
+                <a class="" href="{% url 'delivery_system:create_task' %}">Create Task</a>
+            </p>
+            <p class="nav-item">
+                <a class="" href="{% url 'delivery_system:tasks_list' %}">Tasks</a>
+            </p>
+            <div class="alert alert-danger" role="alert" >
+                <span id="notify"></span>
+            </div>
+        {% endif %}
+        {% if user.staff_list.is_delivery_boy  %}
+            <p class="nav-item">
+                <a class="" href="{% url 'delivery_system:accepted_tasks' %}">Accepted Tasks</a>
+            </p>
 
         {% endif %}
 
-<p class="nav-item">
+        <p class="nav-item">
             <a class="" href="{% url 'logout' %}">Logout</a>
         </p>
-{% endif %}
+    {% endif %}
     <p class="lead " style="float: right">Urban Piper</p>
 </nav>
 
@@ -47,6 +49,55 @@
 {% block content %}
 {% endblock %}
 
+<script>
+    {% if user.staff_list.is_store_manager %}
+        $('.alert').hide();
+        var wsaddr = window.location.host;
+        var ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+        var path = window.location.pathname.replace(/\/$/, "");
+        var wsUri = ws_scheme + "://" + wsaddr + path + "/ws/";
+        var websocket;
+        function setupWebSocket() {
+            websocket = new WebSocket(wsUri);
+            websocket.onopen = function(evt) { onOpen(evt) };
+            websocket.onmessage = function(evt) { onMessage(evt) };
 
+        }
+
+        function onOpen (evt) {
+            console.log("Connected to websocket!");
+            websocket.send(JSON.stringify({
+                'evt': 'notification',
+            }));
+        }
+
+        function onMessage (evt) {
+            a = evt;
+            received_data = evt.data;
+            received_data = JSON.parse(received_data);
+
+
+            if (received_data.type === 'NOTIFY'){
+                message = received_data.data;
+                $('#notify').text(message);
+                jQuery('.alert').show();
+                setTimeout(function() {
+                    jQuery('.alert').hide();
+                }, 5000);
+
+
+
+            }
+
+
+
+
+
+
+        }
+
+        setupWebSocket();
+    {% endif %}
+</script>
 </body>
 </html>

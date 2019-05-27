@@ -9,7 +9,8 @@ urlpatterns = [
     path('home/delivery/accepted_task', views.DeliveryBoyAcceptedTasks.as_view(), name='accepted_tasks'),
     path('home/delivery/decline_task/<int:page_number>/<int:id>', views.decline_task, name='decline_task'),
     path('home/delivery/complete_task/<int:page_number>/<int:id>', views.complete_task, name='complete_task'),
-    path('home/delivery/accept_task/<int:page_number>/<int:id>', views.accept_task, name='accept_task'),
-    path('home/manager/cancel_task/<int:page_number>/<int:id>', views.cancel_task, name='cancel_task')
+    path('home/delivery/accept_task/<int:id>', views.accept_task, name='accept_task'),
+    path('home/manager/cancel_task/<int:page_number>/<int:id>', views.cancel_task, name='cancel_task'),
+    path('home/delivery/accept_a_task', views.AcceptATask.as_view(), name='accept_a_task'),
 
 ]
