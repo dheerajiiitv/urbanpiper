@@ -7,6 +7,7 @@ urlpatterns = [
     path('home/tasks_list',  views.ListOfTasks.as_view(), name='tasks_list'),
     path('home/task_details/<int:pk>', views.DetailsOfTasks.as_view(), name='task_details'),
     path('home/delivery/accepted_task', views.DeliveryBoyAcceptedTasks.as_view(), name='accepted_tasks'),
+    path('home/delivery/completed_task', views.CompletedTaskView.as_view(), name='completed_tasks'),
     path('home/delivery/decline_task/<int:page_number>/<int:id>', views.decline_task, name='decline_task'),
     path('home/delivery/complete_task/<int:page_number>/<int:id>', views.complete_task, name='complete_task'),
     path('home/delivery/accept_task/<int:id>', views.accept_task, name='accept_task'),

@@ -42,6 +42,7 @@ class DeliveryTask(models.Model):
     priority = models.IntegerField(choices=PRIORITIES,default=0)
     creation_date = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='store_manager_task')
+    modified_on = models.DateTimeField(auto_now=True)
     current_state=models.IntegerField(verbose_name='Current State', default=0)
 
     def __str__(self):

@@ -13,7 +13,7 @@
 {% block content %}
 
     <div class="container">
-    <h1 style="margin-top: 7%;" class="jumbotron">Accepted Task List</h1>
+    <h1 style="margin-top: 7%;" class="jumbotron">Completed Task List</h1>
         <div class="row" style="min-height: 400px; max-height: 400px;">
             <table class="table table-hover">
                 <thead>
@@ -25,15 +25,13 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for task in accepted_task %}
+                {% for task in completed_task %}
 
                     <tr>
                         <th scope="row">{{ forloop.counter0 | add:page_obj.start_index }}</th>
                         <td>{{ task.delivery_tak.title_name }}</td>
                         <td>{{ task.delivery_tak.priority  | get_priority  }}</td>
                         <td>{{ task.state | get_state }}</td>
-                    <td><button class="btn btn-danger"> <a  href="{% url 'delivery_system:decline_task' page_number=page_obj.number id=task.delivery_tak.id %}" style="color: white;">Decline</a></button> </td>
-                    <td><button class="btn btn-success"> <a  href="{% url 'delivery_system:complete_task' page_number=page_obj.number id=task.delivery_tak.id %}" style="color: white;">Complete</a></button> </td>
                     </tr>
                 {% endfor %}
                 </tbody>

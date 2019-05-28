@@ -37,9 +37,8 @@
                         <td><a class="btn btn-primary" href="{% url 'delivery_system:task_details' task.id %}">View</a> </td>
                         {% if task.current_state == 0 %}
                     <td><a class="btn btn-danger" href="{% url 'delivery_system:cancel_task' page_number=page_obj.number id=task.id %}">Cancel</a></td>
-                    {% endif %}
-                     {% if task.current_state == 4 %}
-                    <td><a class="btn btn-danger" href="{% url 'delivery_system:task_details' task.id %}">New</a></td>
+                     {% else %}
+                    <td><a class="btn btn-danger" href="#" disabled="">Cancel</a></td>
                     {% endif %}
                     </tr>
                 {% endfor %}

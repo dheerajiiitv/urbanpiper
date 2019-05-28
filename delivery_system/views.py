@@ -78,7 +78,7 @@ class ListOfTasks(LoginRequiredMixin, CheckAuthenticationUserMixin, ListView):
     model = DeliveryTask
     context_object_name = 'tasks_list'
     paginate_by = 5
-    queryset = DeliveryTask.objects.all().order_by('-creation_date')
+    queryset = DeliveryTask.objects.all().order_by('-modified_on')
 
 
 class DetailsOfTasks(LoginRequiredMixin, CheckAuthenticationUserMixin, DetailView):
@@ -214,6 +214,12 @@ def accept_task(request, id):
                     new_state = StateDeliveryTask.objects.create(delivery_tak=task, state=StateDeliveryTask.ACCEPTED,
                                                                  state_change_by=request.user)
                     new_state.save()
+                    ordered = get_new_tasks()
+                    if ordered:
+                        Group('new-tasks').send({"text": json.dumps({'data':serializers.serialize("json", [ordered]),"type": 'TYPE_TASKS'})})
+                    else:
+                        Group('new-tasks').send({"text": json.dumps({'data':serializers.serialize("json", []),"type": 'TYPE_TASKS'})})
+
                     # TODO: Not more than 3 tasks should be accepted.
                     return HttpResponseRedirect(reverse('delivery_system:accepted_tasks'))
                 else:
@@ -227,5 +233,15 @@ def accept_task(request, id):
         return HttpResponseRedirect(reverse('login'))
 
 class AcceptATask(TemplateView):
-
     template_name = 'Tasks/accept_task.html'
+
+
+class CompletedTaskView(LoginRequiredMixin, CheckDeliveryBoy,ListView):
+    template_name = 'Tasks/completed_task.html'
+    model = StateDeliveryTask
+    context_object_name = 'completed_task'
+    paginate_by = 5
+
+    def get_queryset(self):
+        queryset = StateDeliveryTask.objects.filter(state_change_by=self.request.user).filter(state=StateDeliveryTask.COMPLETED).all()
+        return queryset
