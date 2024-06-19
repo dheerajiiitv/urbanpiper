@@ -23,7 +23,7 @@ pytz==2019.1
 redis==2.10.6
 six==1.12.0
 sqlparse==0.3.0
-tornado==5.1.1
+tornado==6.4.1
 Twisted==22.10.0
 txaio==18.8.1
 vine==1.3.0
